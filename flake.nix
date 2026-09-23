@@ -44,6 +44,12 @@
             nativeBuildInputs = with pkgs; [
               cmake
               ninja
+              pkg-config
+            ];
+
+            buildInputs = with pkgs; [
+              eigen
+              stb
             ];
           };
           default = app;
@@ -59,6 +65,10 @@
             cmake
             gdb
             ninja
+            pkg-config
+
+            eigen
+            stb
 
             (python3.withPackages (p: with p; [ jupyterlab ]))
             octave
