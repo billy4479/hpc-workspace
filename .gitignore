@@ -5,3 +5,5 @@ result-*
 .cache/
 build/
 compile_commands.json
+
+.ipynb_checkpoints/
