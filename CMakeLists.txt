@@ -18,6 +18,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_link_options("$<$<CONFIG:Debug>:-fsanitize=address,undefined;-static-libasan;-static-libubsan>")
 endif()
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT lto_supported OUTPUT lto_output)
+if(lto_supported)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+else()
+  message(STATUS "LTO not supported: ${lto_output}")
+endif()
+
 # Adds an executable from cpp/apps/<name>.cpp linked against the hpc lib.
 function(add_experiment name)
   add_executable(${name} ${CMAKE_SOURCE_DIR}/cpp/apps/${name}.cpp)
