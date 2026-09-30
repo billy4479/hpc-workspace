@@ -49,6 +49,7 @@
 
             buildInputs = with pkgs; [
               eigen
+              lis
               stb
             ];
           };
@@ -68,6 +69,7 @@
             pkg-config
 
             eigen
+            lis
             stb
 
             (python3.withPackages (p: with p; [ jupyterlab ]))
