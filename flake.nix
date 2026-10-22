@@ -33,10 +33,43 @@
             octave = pkgs.octave-kernel.definition;
           };
         };
+
+        # Shared across compiler shells; the compiler itself comes from each
+        # shell's stdenv wrapper (cc/c++), which is what CMake auto-detects.
+        # bash (not bashInteractive) breaks metakernel-based Jupyter kernels:
+        # they spawn bash via pexpect and hang waiting for a readline prompt.
+        devPackages = with pkgs; [
+          bashInteractive
+          ccache
+          clang-tools
+          cmake
+          gdb
+          llvm # llvm-ar/llvm-ranlib, needed by CMake for clang LTO
+          ninja
+          pkg-config
+
+          eigen
+          lis
+          stb
+
+          (python3.withPackages (p: with p; [ jupyterlab ]))
+          octave
+          gnuplot
+          ghostscript
+        ];
+
+        shellEnv = {
+          CMAKE_CXX_COMPILER_LAUNCHER = "ccache";
+          CMAKE_GENERATOR = "Ninja";
+          JUPYTER_PATH = jupyterKernels;
+          FONTCONFIG_FILE = pkgs.makeFontsConf {
+            fontDirectories = [ pkgs.dejavu_fonts ];
+          };
+        };
       in
       {
         packages = rec {
-          app = pkgs.stdenv.mkDerivation {
+          app = pkgs.clangStdenv.mkDerivation {
             pname = projectName;
             version = "0.1.0";
             src = ./.;
@@ -56,36 +89,17 @@
           default = app;
         };
 
-        devShells.default = pkgs.mkShell {
-          # bash (not bashInteractive) breaks metakernel-based Jupyter kernels:
-          # they spawn bash via pexpect and hang waiting for a readline prompt.
-          packages = with pkgs; [
-            bashInteractive
-            ccache
-            clang-tools
-            cmake
-            gdb
-            ninja
-            pkg-config
+        # clangStdenv puts the clang wrapper on PATH (cc/c++), so CMake
+        # picks clang as default compiler both here and in the app package.
+        devShells.default = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
+          packages = devPackages;
+          env = shellEnv;
+        };
 
-            eigen
-            lis
-            stb
-
-            (python3.withPackages (p: with p; [ jupyterlab ]))
-            octave
-            gnuplot
-            ghostscript
-          ];
-
-          env = {
-            CMAKE_CXX_COMPILER_LAUNCHER = "ccache";
-            CMAKE_GENERATOR = "Ninja";
-            JUPYTER_PATH = jupyterKernels;
-            FONTCONFIG_FILE = pkgs.makeFontsConf {
-              fontDirectories = [ pkgs.dejavu_fonts ];
-            };
-          };
+        # Same shell with GCC, for compiler comparisons.
+        devShells.gcc = pkgs.mkShell.override { stdenv = pkgs.gccStdenv; } {
+          packages = devPackages;
+          env = shellEnv;
         };
       }
     );

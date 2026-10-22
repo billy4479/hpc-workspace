@@ -9,7 +9,12 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options("$<$<CONFIG:Debug>:-fsanitize=address,undefined;-fno-omit-frame-pointer;-fno-sanitize-recover=all>")
-  add_link_options("$<$<CONFIG:Debug>:-fsanitize=address,undefined;-static-libasan;-static-libubsan>")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # clang statically links both runtimes with a single flag; GCC needs per-runtime flags.
+    add_link_options("$<$<CONFIG:Debug>:-fsanitize=address,undefined;-static-libsan>")
+  else()
+    add_link_options("$<$<CONFIG:Debug>:-fsanitize=address,undefined;-static-libasan;-static-libubsan>")
+  endif()
 endif()
 
 include(CheckIPOSupported)
