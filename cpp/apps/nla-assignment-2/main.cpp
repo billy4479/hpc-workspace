@@ -5,8 +5,9 @@
 #include <Eigen/src/Eigenvalues/GeneralizedEigenSolver.h>
 #include <Eigen/src/SVD/BDCSVD.h>
 #include <Eigen/src/SVD/SVDBase.h>
+#include <algorithm>
 #include <filesystem>
-#include <print>
+#include <iostream>
 #include <unsupported/Eigen/SparseExtra>
 
 #include <hpc/stb.hpp>
@@ -58,8 +59,8 @@ void save_image(const Image &img, const char *path) {
 
 } // namespace
 
-void get_C_and_D(int k, const Eigen::BDCSVD<Image> &solver,
-                 const char *save_path, const char *task) {
+static void get_C_and_D(int k, const Eigen::BDCSVD<Image> &solver,
+                        const char *save_path, const char *task) {
   auto C = solver.matrixU()(Eigen::all, Eigen::seq(0, k - 1));
   auto D = solver.matrixV()(Eigen::all, Eigen::seq(0, k - 1)) *
            solver.singularValues()(Eigen::seq(0, k - 1)).asDiagonal();
@@ -67,18 +68,21 @@ void get_C_and_D(int k, const Eigen::BDCSVD<Image> &solver,
   auto multiplied = C * D.transpose();
   save_image(multiplied, save_path);
 
-  std::println("- Task {}: k = {}, nnz(C) = {}, nnz(D) = {}, save_path = {}",
-               task, k, C.nonZeros(), D.nonZeros(), save_path);
-  std::println("\tC: {}x{}", C.rows(), C.cols());
-  std::println("\tD: {}x{}", D.rows(), D.cols());
+  std::cout << "- Task " << task << ": k = " << k << ", nnz(C) = " << C.nonZeros()
+            << ", nnz(D) = " << D.nonZeros() << ", save_path = " << save_path
+            << "\n";
+  std::cout << "\tC: " << C.rows() << "x" << C.cols() << "\n";
+  std::cout << "\tD: " << D.rows() << "x" << D.cols() << "\n";
 }
 
 int main() {
+  std::cout << std::scientific;
+
   // Task 1
   Image input_image = load_image("./artifacts/deer.jpg");
 
   const auto ATA = input_image.transpose() * input_image;
-  std::println("- Task 1: norm {}", ATA.norm());
+  std::cout << "- Task 1: norm " << ATA.norm() << "\n";
 
   // Task 2
   const Eigen::BDCSVD<Image> svd_ata_solver(ATA);
@@ -89,30 +93,30 @@ int main() {
   auto eigenvalues = svd_ata_solver.singularValues().unaryExpr(
       [](const auto x) { return sqrt(x); });
 
-  std::println("- Task 2: lambda_1 = {}, lambda_2 = {}", eigenvalues(0),
-               eigenvalues(1));
+  std::cout << "- Task 2: lambda_1 = " << eigenvalues(0)
+            << ", lambda_2 = " << eigenvalues(1) << "\n";
 
   // Task 3
   constexpr const char *ata_path = "artifacts/ATA.mtx";
   if (!std::filesystem::exists(ata_path)) {
     Eigen::saveMarket(ATA, ata_path);
-    std::println("- Task 3: saved to {}", ata_path);
+    std::cout << "- Task 3: saved to " << ata_path << "\n";
   } else {
-    std::println("- Task 3: using cached {}", ata_path);
+    std::cout << "- Task 3: using cached " << ata_path << "\n";
   }
 
   constexpr const char *lis_command_task3 =
       "./build/cpp/apps/lis-eigen artifacts/ATA.mtx artifacts/eigenvectors.txt "
       "artifacts/history.txt -e pi "
       "-i cg -etol 1e-10";
-  std::println("\t - command `{}`", lis_command_task3);
+  std::cout << "\t - command `" << lis_command_task3 << "`\n";
 
   // Task 4
   constexpr const char *lis_command_task4 =
       "./build/cpp/apps/lis-eigen artifacts/ATA.mtx artifacts/eigenvectors.txt "
       "artifacts/history.txt -e pi "
       "-i cg -etol 1e-10 -shift 5.6432e7";
-  std::println("- Task 4: command `{}`", lis_command_task4);
+  std::cout << "- Task 4: command `" << lis_command_task4 << "`\n";
 
   // Task 5
   const Eigen::BDCSVD<Image> svd_solver(input_image, Eigen::ComputeThinU |
@@ -122,7 +126,7 @@ int main() {
   }
 
   const auto &Sigma = svd_solver.singularValues();
-  std::println("- Task 5: norm(Sigma) = {}", Sigma.norm());
+  std::cout << "- Task 5: norm(Sigma) = " << Sigma.norm() << "\n";
 
   // Task 6 & 7
   get_C_and_D(30, svd_solver, "artifacts/deer_CD_30.png", "6 & 7");
@@ -142,7 +146,7 @@ int main() {
       }
     }
   }
-  std::println("- Task 8: norm = {}", checkboard.norm());
+  std::cout << "- Task 8: norm = " << checkboard.norm() << "\n";
   constexpr const char *checkboard_path = "artifacts/checkboard.png";
   save_image(checkboard, checkboard_path);
 
@@ -151,7 +155,7 @@ int main() {
   constexpr const char *noisy_checkboard_path =
       "artifacts/noisy_checkboard.png";
   save_image(noisy_checkboard, noisy_checkboard_path);
-  std::println("- Task 9: path = {}", noisy_checkboard_path);
+  std::cout << "- Task 9: path = " << noisy_checkboard_path << "\n";
 
   // Task 10
   const Eigen::BDCSVD<Image> svd_noisy_checkboard(
@@ -160,9 +164,9 @@ int main() {
     std::cerr << "Computation failed\n";
   }
 
-  std::println("- Task 10: sigma_1 = {}, sigma_2 = {}",
-               svd_noisy_checkboard.singularValues()(0),
-               svd_noisy_checkboard.singularValues()(1));
+  std::cout << "- Task 10: sigma_1 = " << svd_noisy_checkboard.singularValues()(0)
+            << ", sigma_2 = " << svd_noisy_checkboard.singularValues()(1)
+            << "\n";
 
   // Task 11
   get_C_and_D(6, svd_noisy_checkboard, "artifacts/noisy_checkboard_CD_06.png",
