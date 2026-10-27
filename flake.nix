@@ -34,8 +34,30 @@
           };
         };
 
+        # LIS with the SA-AMG preconditioner (its Fortran implementation needs
+        # gfortran). Built shared so that consumers linking liblis pick up the
+        # libgfortran runtime via DT_NEEDED; cmake/dependencies/lis.cmake just
+        # does find_library(lis).
+        lisSaamg = pkgs.lis.overrideAttrs (old: {
+          # -std=gnu17: lis 2.1.11 calls its Fortran callbacks through a
+          # K&R-style `void (*)()` cast, which C23 (gcc >= 15 default) rejects.
+          configureFlags = (old.configureFlags or [ ]) ++ [
+            "--enable-saamg"
+            "--enable-shared"
+            "CFLAGS=-std=gnu17"
+          ];
+          nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.gfortran ];
+          # libtool links liblis.so with the C compiler, which does not know
+          # the Fortran runtime; link libgfortran explicitly so liblis.so
+          # carries the DT_NEEDED and consumers inherit it.
+          env = (old.env or { }) // {
+            NIX_LDFLAGS = "-L${pkgs.gfortran.cc.lib}/lib -lgfortran";
+          };
+        });
+
         # Shared across compiler shells; the compiler itself comes from each
         # shell's stdenv wrapper (cc/c++), which is what CMake auto-detects.
+
         # bash (not bashInteractive) breaks metakernel-based Jupyter kernels:
         # they spawn bash via pexpect and hang waiting for a readline prompt.
         devPackages = with pkgs; [
@@ -49,7 +71,7 @@
           pkg-config
 
           eigen
-          lis
+          lisSaamg
           stb
 
           (python3.withPackages (p: with p; [ jupyterlab ]))
@@ -82,11 +104,13 @@
 
             buildInputs = with pkgs; [
               eigen
-              lis
+              lisSaamg
               stb
             ];
           };
           default = app;
+          # The overridden LIS, for inspecting/building it directly.
+          inherit lisSaamg;
         };
 
         # clangStdenv puts the clang wrapper on PATH (cc/c++), so CMake
