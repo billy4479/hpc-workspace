@@ -65,12 +65,12 @@ static void get_C_and_D(int k, const Eigen::BDCSVD<Image> &solver,
   auto D = solver.matrixV()(Eigen::all, Eigen::seq(0, k - 1)) *
            solver.singularValues()(Eigen::seq(0, k - 1)).asDiagonal();
 
-  auto multiplied = C * D.transpose();
+  const Image multiplied = C * D.transpose();
   save_image(multiplied, save_path);
 
-  std::cout << "- Task " << task << ": k = " << k << ", nnz(C) = " << C.nonZeros()
-            << ", nnz(D) = " << D.nonZeros() << ", save_path = " << save_path
-            << "\n";
+  std::cout << "- Task " << task << ": k = " << k
+            << ", nnz(C) = " << C.nonZeros() << ", nnz(D) = " << D.nonZeros()
+            << ", save_path = " << save_path << "\n";
   std::cout << "\tC: " << C.rows() << "x" << C.cols() << "\n";
   std::cout << "\tD: " << D.rows() << "x" << D.cols() << "\n";
 }
@@ -81,7 +81,7 @@ int main() {
   // Task 1
   Image input_image = load_image("./artifacts/deer.jpg");
 
-  const auto ATA = input_image.transpose() * input_image;
+  const Image ATA = input_image.transpose() * input_image;
   std::cout << "- Task 1: norm " << ATA.norm() << "\n";
 
   // Task 2
@@ -151,7 +151,7 @@ int main() {
   save_image(checkboard, checkboard_path);
 
   // Task 9
-  auto noisy_checkboard = checkboard + Image::Random(l, l) * 60;
+  const Image noisy_checkboard = checkboard + Image::Random(l, l) * 60;
   constexpr const char *noisy_checkboard_path =
       "artifacts/noisy_checkboard.png";
   save_image(noisy_checkboard, noisy_checkboard_path);
@@ -164,7 +164,8 @@ int main() {
     std::cerr << "Computation failed\n";
   }
 
-  std::cout << "- Task 10: sigma_1 = " << svd_noisy_checkboard.singularValues()(0)
+  std::cout << "- Task 10: sigma_1 = "
+            << svd_noisy_checkboard.singularValues()(0)
             << ", sigma_2 = " << svd_noisy_checkboard.singularValues()(1)
             << "\n";
 
