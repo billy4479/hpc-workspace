@@ -1,5 +1,7 @@
-add_library(hpc STATIC src/stb.cpp)
-add_library(hpc::hpc ALIAS hpc)
+add_library(hpc_headers INTERFACE)
+add_library(hpc::headers ALIAS hpc_headers)
+target_include_directories(hpc_headers INTERFACE include)
 
-target_include_directories(hpc PUBLIC include)
-target_link_libraries(hpc PUBLIC Eigen3::Eigen PkgConfig::STB LIS::LIS)
+add_library(hpc_stb STATIC src/stb.cpp)
+add_library(hpc::stb ALIAS hpc_stb)
+target_link_libraries(hpc_stb PUBLIC hpc::headers PkgConfig::STB)
