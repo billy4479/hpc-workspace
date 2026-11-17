@@ -1,5 +1,7 @@
 include_guard(GLOBAL)
 
+find_package(MPI REQUIRED COMPONENTS C)
+
 # LIS ships neither pkg-config nor CMake config files, so search manually.
 find_path(LIS_INCLUDE_DIR NAMES lis.h)
 find_library(LIS_LIBRARY NAMES lis)
@@ -9,5 +11,8 @@ if(NOT TARGET LIS::LIS)
   add_library(LIS::LIS UNKNOWN IMPORTED)
   set_target_properties(LIS::LIS PROPERTIES
     IMPORTED_LOCATION "${LIS_LIBRARY}"
-    INTERFACE_INCLUDE_DIRECTORIES "${LIS_INCLUDE_DIR}")
+    INTERFACE_INCLUDE_DIRECTORIES "${LIS_INCLUDE_DIR}"
+    # lis.h requires this to expose the MPI communicator ABI.
+    INTERFACE_COMPILE_DEFINITIONS USE_MPI
+    INTERFACE_LINK_LIBRARIES MPI::MPI_C)
 endif()

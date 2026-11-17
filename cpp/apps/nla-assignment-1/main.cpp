@@ -81,7 +81,7 @@ int main() {
   std::println("- Task 8: saved to {} and {}", sh1_mtx_path, w_mtx_path);
 
   // A2 is not symmetric (Task 6), so it can't be SPD: no CG, use BiCGSTAB.
-  // Our LIS is serial, so this runs without mpirun.
+  // Run this image-processing app as a single process, without mpirun.
   constexpr auto w_lis_path = "./artifacts/w_lis.mtx";
   constexpr auto x_lis_path = "./artifacts/x_lis.mtx";
   hpc::write_mtx_vector_lis(noisy_image_vec, w_lis_path);

@@ -11,7 +11,7 @@ namespace hpc {
 // Solves the system stored in MatrixMarket files with LIS.
 // Returns <iteration_count, residual>. `options` is passed to
 // lis_solver_set_option, for example "-i bicgstab -p ilu".
-// Serial build only: our LIS is compiled without MPI, no mpirun needed.
+// MPI-enabled LIS also supports a single process without mpirun.
 inline std::pair<int, double> solve_lis_file_output(const char *matrix_path,
                                                     const char *b_path,
                                                     const char *solution_path,

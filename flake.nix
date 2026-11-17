@@ -34,24 +34,27 @@
           };
         };
 
-        # LIS with the SA-AMG preconditioner (its Fortran implementation needs
-        # gfortran). Built shared so that consumers linking liblis pick up the
-        # libgfortran runtime via DT_NEEDED; cmake/dependencies/lis.cmake just
-        # does find_library(lis).
+        # MPI-enabled LIS with the SA-AMG preconditioner (requires gfortran).
+        # Build shared so consumers inherit the Fortran runtime and MPI
+        # bindings via DT_NEEDED.
         lisSaamg = pkgs.lis.overrideAttrs (old: {
           # -std=gnu17: lis 2.1.11 calls its Fortran callbacks through a
           # K&R-style `void (*)()` cast, which C23 (gcc >= 15 default) rejects.
           configureFlags = (old.configureFlags or [ ]) ++ [
+            "--enable-mpi"
             "--enable-saamg"
             "--enable-shared"
             "CFLAGS=-std=gnu17"
+            # SA-AMG uses legacy MPI bindings with mixed argument types.
+            "FFLAGS=-fallow-argument-mismatch"
+            "FCFLAGS=-fallow-argument-mismatch"
           ];
           nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.gfortran ];
-          # libtool links liblis.so with the C compiler, which does not know
-          # the Fortran runtime; link libgfortran explicitly so liblis.so
-          # carries the DT_NEEDED and consumers inherit it.
+          buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.openmpi ];
+          # libtool links liblis.so with the C compiler; explicitly link the
+          # Fortran runtime and legacy MPI bindings used by SA-AMG.
           env = (old.env or { }) // {
-            NIX_LDFLAGS = "-L${pkgs.gfortran.cc.lib}/lib -lgfortran";
+            NIX_LDFLAGS = "-L${pkgs.gfortran.cc.lib}/lib -lgfortran -L${pkgs.openmpi}/lib -lmpi_mpifh";
           };
         });
 
@@ -73,6 +76,7 @@
 
           eigen
           lisSaamg
+          openmpi
           stb
 
           (python3.withPackages (p: with p; [ jupyterlab ]))
@@ -107,6 +111,7 @@
               llvmPackages.openmp
               eigen
               lisSaamg
+              openmpi
               stb
             ];
           };
