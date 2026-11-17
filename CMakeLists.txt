@@ -8,6 +8,7 @@ include(compile-options)
 include(dependencies/eigen3)
 include(dependencies/stb)
 include(dependencies/lis)
+include(dependencies/openmp)
 include(add-experiment)
 
 add_subdirectory(cpp/lib)

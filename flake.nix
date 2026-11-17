@@ -67,6 +67,7 @@
           cmake
           gdb
           llvm # llvm-ar/llvm-ranlib, needed by CMake for clang LTO
+          llvmPackages.openmp
           ninja
           pkg-config
 
@@ -103,6 +104,7 @@
             ];
 
             buildInputs = with pkgs; [
+              llvmPackages.openmp
               eigen
               lisSaamg
               stb
