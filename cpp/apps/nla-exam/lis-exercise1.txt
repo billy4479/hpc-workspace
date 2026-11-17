@@ -1,0 +1,2 @@
+./test1 Aex1.mtx b.mtx sol.txt history.txt -i bicgstab -tol 1e-12 -p jacobi
+./test1 Aex1.mtx b.mtx sol.txt history.txt -i bicgstab -tol 1e-12 -p jacobi -adds true

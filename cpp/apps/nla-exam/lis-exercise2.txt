@@ -1,0 +1,4 @@
+./eigen1 A_ex2.mtx evector.txt ehist.txt -e pi -tol 1e-10 -emaxiter 1000000
+./eigen1 A_ex2.mtx evector.txt ehist.txt -e pi -tol 1e-10 -emaxiter 1000000 -shift -6
+./eigen1 A_ex2.mtx evector.txt ehist.txt -e ii -tol 1e-10 -emaxiter 1000000
+
