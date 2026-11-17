@@ -1,12 +1,22 @@
 include_guard(GLOBAL)
 
-# Adds an executable from the app folder cpp/apps/<name>/.
-# Source paths are relative to that folder, e.g. add_experiment(intro main.cpp).
-# Declare dependencies separately with target_link_libraries.
+# Source paths are relative to cpp/apps/<name>/.
+# Example: add_experiment(intro SOURCES main.cpp LIBRARIES Eigen3::Eigen hpc::stb)
 function(add_experiment name)
-  foreach(src IN LISTS ARGN)
+  cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "SOURCES;LIBRARIES")
+  if(ARG_UNPARSED_ARGUMENTS OR ARG_KEYWORDS_MISSING_VALUES)
+    message(FATAL_ERROR "Invalid arguments to add_experiment(${name})")
+  endif()
+  if(NOT ARG_SOURCES)
+    message(FATAL_ERROR "add_experiment(${name}) requires SOURCES")
+  endif()
+
+  foreach(src IN LISTS ARG_SOURCES)
     list(APPEND sources ${CMAKE_SOURCE_DIR}/cpp/apps/${name}/${src})
   endforeach()
   add_executable(${name} ${sources})
+  if(ARG_LIBRARIES)
+    target_link_libraries(${name} PRIVATE ${ARG_LIBRARIES})
+  endif()
   install(TARGETS ${name})
 endfunction()
